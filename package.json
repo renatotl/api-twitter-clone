@@ -1,0 +1,28 @@
+{
+  "name": "api-twitter-clone",
+  "version": "1.0.0",
+  "description": "API para clone do twitter",
+  "main": "index.js",
+  "scripts": {
+    "dev": "nodemon src/index",
+    "start": "node src/index"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/renatotl/api-twitter-clone.git"
+  },
+  "keywords": [],
+  "author": "Renato Tenório",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/renatotl/api-twitter-clone/issues"
+  },
+  "homepage": "https://github.com/renatotl/api-twitter-clone#readme",
+  "dependencies": {
+    "cors": "^2.8.5",
+    "dotenv": "^16.0.1",
+    "express": "^4.18.1",
+    "mongoose": "^6.4.5",
+    "nodemon": "^2.0.19"
+  }
+}
