@@ -101,3 +101,40 @@ unique: true -> não permite com que um dado seja repetido no banco. Isso vai im
 lowercase: true -> transforma a string para ter apenas letras minúsculas;
 select: false -> não deixa que o campo seja exibido nas requisições GET
 JÁ CONFIGURAMOS O NOSSO ARQUIVO USER.JS
+
+15 - Vamos ter duas rotas relacionadas ao usuário: uma para cadastro e outra para exibir os usuários cadastrados. Não esqueça de importar o arquivo controller:
+
+const router = require("express").Router();
+const userController = require("users.controller");
+
+router.post("/", userController.createUserController);
+router.get("/", userController.findAllUserController);
+
+module.exports = router;
+
+Importe as rotas no index.js:
+
+
+// Restante do código...
+const connectDatabase = require("database/database");
+// CÓDIGO NOVO
+const userRoute = require("users/users.route");
+// CÓDIGO NOVO
+
+const port = process.env.PORT || 3001;
+const app = express();
+
+connectDatabase();
+app.use(cors());
+
+// CÓDIGO NOVO
+app.use("/users", userRoute);
+// CÓDIGO NOVO
+
+app.listen(port, () => {
+  console.log(`Servidor rodando na porta ${port}`);
+});
+
+
+16 - rotas chama controler que chama o service o service acessa amodel e faz toda a nosso projeto
+
