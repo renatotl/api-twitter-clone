@@ -5,8 +5,9 @@ const findByEmailUserService = (email) => User.findOne({email: email})// procura
 // recebendo o (body) o segundo (body) é o que ele cria
 const createUserService = (body) => User.create(body);// quando se faz inlie não precisa de return
 
+const findAllUserService = () => User.find();
 
 
-module.exports = { findByEmailUserService, createUserService };
+module.exports = { findByEmailUserService, createUserService, findAllUserService };
 
 

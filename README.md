@@ -138,3 +138,71 @@ app.listen(port, () => {
 
 16 - rotas chama controler que chama o service o service acessa amodel e faz toda a nosso projeto
 
+
+
+17 - Thunder Client: Global Enviroment
+
+Crie a collection: API_TWITTER no seu Thunder Client para facilitar o teste das rotas.
+Vamos aprender a trabalhar com as enviroments do TC para facilitar os nossos testes.
+Na aba Env > clique nas 3 barras > New Enviroment:
+
+Nomeie a env como (Global Env), clique sobre ela e nomeie a variável como baseURL e o valor dela será nossa URL local: http://localhost:3000. Por fim, salve:
+Agora você pode utilizar a variável em suas requisições ao invés de sempre digitar a URL.
+Para utilizar a variável chame-a entre chaves duplas {{}}. Exemplo:
+{{baseURL}}/users/
+
+
+
+18 - deixamos configurado nossa rota create
+
+19 - deixamos prontos o service e controle do findALL
+o find é um método do mongoose
+
+20 - npm i bcryptjs Vá até o arquivo do model User.js e importe o bcryptjs:
+const bcrypt = require("bcryptjs");
+21 - no final do nosso user.js colocamos o UserSchema.pre('save', () =>{})
+e importamos 
+
+
+SOBRE O BCRUPT
+A senha será transformada em um hash. Precisamos de um salt para deixar o hash mais forte.
+
+Hash
+Um hash é o resultado de uma função de hash, que é uma operação criptográfica que gera identificadores únicos e irrepetíveis a partir de uma determinada informação que no nosso caso é a senha.
+
+Salt
+Se dois usuários tiverem a mesma senha, eles terão os mesmos hashes. É possivel evitar isso adicionando um salt ao hash.
+
+O salt é uma string aleatória que pode ser concatenada (pré-fixando ou pós-fixando) na senha.
+Isso torna o hash de uma senha em uma string completamente diferente. Para verificar se uma senha está correta, é necessário o salt. Ele é normalmente armazenado no repositório no mesmo local do hash, ou junto dele
+
+
+ após a definição do Schema, utilize o método pre e informe dois parâmetros: "save" para executar a encriptação antes de salvar a senha e a função que fará a encriptação. A função será assíncrona pois o bcrypt retorna uma Promisse e terá um next já que ela é um middleware
+
+ Dentro da função, acima do next() chamaremos o campo password com a palavra-chave this para me referir ao password que está nesse arquivo. O this.password receberá o método hashdo bcrypt com dois parâmetros: a senha que sofrerá o hash e o valor do salt:
+
+
+
+22 - Auth Documents
+Vamos ter apenas uma rota de login. Não esqueça de importar o arquivo controller:
+const router = require("express").Router();
+const authController = require("./auth.controller");
+
+router.post("/login", authController.loginController);
+
+module.exports = router;
+Importe a rota no index.js:
+const authRoute = require("./auth/auth.route");
+app.use("/auth", authRoute);
+
+foi necessário criar uma past auth em src e ceiar os arquivos:
+auth.controller.js, auth.route.js, auth.service.js e auth.middleware.js
+
+;;;;;;
+auth.service vai ter um gerador de token
+auth.middleware valida o token e barra pessoas mas itencionadas 
+
+23 - foi feito uma rota as configurações em auth.route
+
+24 - authController já configurado e exportado
+25 - fizemos um baseURL exclusivo para auth/login

@@ -1,5 +1,7 @@
 const mongoose = require("mongoose");//exportando pra cá nosso mongoose
 
+const bcrypt = require("bcryptjs")
+
 const UserSchema = new mongoose.Schema({// ele é um objeto
   name: {
     type: String,
@@ -19,13 +21,22 @@ const UserSchema = new mongoose.Schema({// ele é um objeto
   password: {
     type: String,
     required: true,
-    select: false,//quando criar um novo usuário ele não retorna o password
+    select: false,//quando criar um novo usuário ele não retorna o password não vai mostar o password no findAll
   },
   avatar: {
     type: String,
     required: true,
   },
 });
+
+// o código de baixo não aceita aerofunction
+//antes de salvar vai executar uma função de callback, antes de salvar execute este cara
+UserSchema.pre('save', async function (next)  {// o 10 é quantas valtas vamos querer de incryptação
+  this.password = await bcrypt.hash(this.password, 10)//falando desse Schema atual
+// essa função add um novo valor ao password que está sendo salvo
+next()// ele é um middler se não ele fica pra semprenpm run dev
+
+})
 
 const User = mongoose.model("User", UserSchema);
 

@@ -4,7 +4,7 @@ const cors = require("cors");
 const connectDataBase = require('./database/database');
 
 const userRoute = require("./users/users.route");
-
+const authRoute = require("./auth/auth.route")
 
 
 const port = process.env.PORT || 3000;
@@ -16,7 +16,7 @@ app.use(cors());
 app.use(express.json());// para o nosso backend reconhecer o json
 
 app.use("/users", userRoute);
-
+app.use("/auth", authRoute)
 
 
 app.get("/", (req, res) => {
