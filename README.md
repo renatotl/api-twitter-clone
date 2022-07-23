@@ -206,3 +206,94 @@ auth.middleware valida o token e barra pessoas mas itencionadas
 
 24 - authController já configurado e exportado
 25 - fizemos um baseURL exclusivo para auth/login
+
+
+Controller (Login)
+
+Vamos iniciar importando o authService que contém as regras de negócio e o bcrypt que fará a validação da senha:
+
+const authService = require("./auth.service");
+const bcrypt = require("bcryptjs");
+
+Criaremos a função loginController e receberemos do corpo da requisição o email e a senha para efetuar o login:
+
+const loginController = async (req, res) => {
+  const { email, password } = req.body;
+};
+
+Invocaremos a função do service que buscará as informações do usuário através do email e faremos uma validação caso esse usuário não exista:
+
+  const user = await authService.loginService(email);
+
+  if (!user) {
+    return res.status(400).send({ message: "Usuário não encontrado!" });
+  }
+
+  Faremos a validação de senha usando o método compare do bcrypt. Passamos dois parâmetros: a senha informada pelo usuário e a senha cadastrada no banco de dados. Caso as senhas não conferirem, informaremos uma mensagem de erro;
+
+  const isPasswordValid = await bcrypt.compare(password, user.password);
+
+  if (!isPasswordValid) {
+    return res.status(400).send({ message: "Senha inválida!" });
+  }
+
+  Passada todas as validações, retornaremos as informações do usuário:
+
+  res.send(user);
+
+  Não esqueça de exportar a função:
+
+module.exports = { loginController };
+
+Após isso, o arquivo auth.controller.js ficará assim:
+
+const authService = require("./auth.service");
+const bcrypt = require("bcryptjs");
+
+const loginController = async (req, res) => {
+  const { email, password } = req.body;
+
+  const user = await authService.loginService(email);
+
+  if (!user) {
+    return res.status(400).send({ message: "Usuário não encontrado!" });
+  }
+
+  const isPasswordValid = await bcrypt.compare(password, user.password);
+
+  if (!isPasswordValid) {
+    return res.status(400).send({ message: "Senha inválida!" });
+  }
+
+  res.send(user);
+};
+
+module.exports = { loginController };
+;;;
+Service (Login)
+
+Começamos importando o model User que será usado para manipularmos o banco de dados:
+
+const User = require("../users/User");
+
+Para buscarmos um usuário no banco de dados através do email, criaremos a função loginService que receberá o email como parâmetro, nela utilizaremos o método findOne do mongoose. Utilizaremos outro método chamado select para modificarmos o parâmetro do password predefinido no model, alterando o false para true e recebendo a senha para que a mesma possa ser conferida no controller:
+
+const loginService = (email) => User.findOne({ email: email }).select("+password");
+
+Não esqueça de exportar a função:
+
+module.exports = { loginService };
+
+Após isso, o arquivo auth.service.js deve ficar assim:
+
+const User = require("../users/User");
+
+const loginService = (email) => User.findOne({ email: email }).select("+password");
+
+module.exports = { loginService };
+
+
+
+
+
+
