@@ -293,6 +293,43 @@ const loginService = (email) => User.findOne({ email: email }).select("+password
 module.exports = { loginService };
 
 
+::::
+
+JWT ou JSON Web Token é um padrão de mercado que tem como objetivo transmitir ou armazenar de forma compacta e segura objetos JSON entre diferentes aplicações.
+
+O JWT é utilizado em dois principais cenários, quando queremos realizar um processo de autorização em nossa aplicação ou quando queremos realizar troca de informações.
+
+Vamos instalar a biblioteca jsonwebtoken para gerar os tokens. Abra o terminal e execute o comando:
+
+npm i jsonwebtoken
+///
+
+Service (JWT)
+
+Vá até o arquivo auth.service.js e importe o jsonwebtoken:
+
+const jwt = require("jsonwebtoken");
+
+
+Vamos criar a função generateToken que será responsável por gerar o token. Dentro dela utilizaremos o método sign do jwt que receberá três parâmetros: o ID do usuário que está sendo autenticado, a chave secreta da aplicação e o tempo de expiração do token, em segundos:
+
+const generateToken = (userId) => jwt.sign({ id: userId }, process.env.SECRET, { expiresIn: 86400 });
+
+A chave secreta é um hash MD5 qualquer e deve ser guardada no seu arquivo .env:
+
+SECRET = 7bfd3923d29dd78e2521e0330a48fb89
+
+importante para gerar o codigo hash baste no google md5 hash generate e a palavra que for escrita gerará um hash
+
+------
+Vá até o auth.controller.js e importe o dotenv:
+
+require("dotenv").config();
+
+Dentro da função loginController, invoque a função generateToken do authService e passe o ID do usuário como parâmetro. No fim, substitua a resposta pelo token:
+
+
+
 
 
 

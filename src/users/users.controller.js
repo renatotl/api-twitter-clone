@@ -1,4 +1,6 @@
 const userService = require("./users.service");
+const authService = require("../auth/auth.service")
+
 
 const createUserController = async (req,res) => {
 // fazendo o create
@@ -26,7 +28,18 @@ if(!user){// se não tiver usuário
    });
 }
 
-res.status(201).send(user);
+const token = authService.generateToken(user.id);
+
+res.status(201).send({
+  user: {
+    id: user.id,
+    name,
+    username,
+    email,
+    avatar,
+  },
+  token,// manda o token que foi gerado
+});
 
 }
 

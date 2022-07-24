@@ -1,5 +1,5 @@
 const authService = require("./auth.service")
-
+require("dotenv").config();//acessa as variávris de ambiente
 const bcrypt = require("bcryptjs")
 
 const loginController = async (req, res) => {
@@ -25,11 +25,12 @@ const isPasswordValid = await bcrypt.compare(password, user.password)// ele vai 
 if(!isPasswordValid){
   return res.status(400).send({massage: "Senha inválida "})
 }
+const token = authService.generateToken(user.id);
+
+res.send({ token });
 
 
-res.send(user)
 }
-
 
 
 
