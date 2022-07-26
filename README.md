@@ -328,9 +328,88 @@ require("dotenv").config();
 
 Dentro da função loginController, invoque a função generateToken do authService e passe o ID do usuário como parâmetro. No fim, substitua a resposta pelo token:
 
+/////
+Esse middleware será responsável por permitir ou bloquear o acesso de usuários às rotas de Tweet que construiremos nas próximas aulas.
+
+Vamos iniciar criando uma função que será responsável por buscar um usuário por ID no banco de dados. Vá até o arquivo users.service.js, crie uma função chamada findByIdUserService e chame o método findById do mongoose:
+
+const findByIdUserService = (idUser) => User.findById(idUser);
+
+Agora, vamos começar a construir o nosso middleware. Abra o arquivo auth.middleware.js e importe:
+
+O dotenv pois vamos usar nossa chave secreta;
+O jwt para fazer a verificação do token;
+E a função findByIdUserService de forma descontruída para buscarmos o usuário no banco de dados.
+
+
+Buscaremos da requisição o tokenatravés dos headers e já faremos a validação caso esse token não seja informado:
+
+  const authHeader = req.headers.authorization;
+
+  if (!authHeader) {
+    return res.status(401).send({ message: "O token não foi informado!" });
+  }
+
+O token jwt possui uma formatação padrão: Bearer <token>, se o token não tiver essa formatação, ele é um token inválido. Vamos dividi-lo em duas partes através do método split para assim podermos analisá-lo de forma assertiva:
+
+
+  const parts = authHeader.split(" "); // ["Bearer", "<token>"]
+
+  if (parts.length !== 2) {
+    return res.status(401).send({ message: "Token inválido!" });
+  }
+
+
+Vamos desconstruir o array e validar se a primeira palavra é o Bearer. Utilizaremos uma regex para isso:
+
+  const [scheme, token] = parts;
+
+  if (!/^Bearer^/i.test(scheme)) {
+    return res.status(401).send({ message: "Token malformatado!" });
+  }
+
+
+
+  Expressões Regulares (regex)
+
+Expressões regulares são padrões utilizados para selecionar combinações de caracteres em uma string. Em JavaScript, expressões regulares também são objetos. Elas podem ser utilizadas com os métodos exec e test do objeto RegExp, e com os métodos match, replace, search, e split do objeto String
+
+Agora, utilizaremos o método verify do jwt que fará a verificação do token e retornará, na requisição, o ID do usuário autenticado. O método receberá três parâmetros: o token, a chave secreta e a função que retornará o usuário.
+
+  jwt.verify(token, process.env.SECRET, async (err, decoded) => {});
+
+  A função de callback terá dois parâmetros: um erro e a decodificação do token. Vamos buscar o usuário através do ID informado no token, validar se não aconteceu nenhum erro ou se o usuário foi encontrado e, por fim, devolveremos na requisição o ID desse usuário. Se tudo der certo, chegamos no next e terminamos a validação do token:
+
+
+  jwt.verify(token, process.env.SECRET, async (err, decoded) => {
+    const user = findByIdUserService(decoded.id);
+
+    if (err || !user || !user.id) {
+      return res.status(401).send({ message: "Token inválido!" });
+    }
+
+    req.userId = user.id;
+
+    return next();
+  });
+
+
+
+Vamos desconstruir o array e validar se a primeira palavra é o Bearer. Utilizaremos uma regex para isso:
 
 
 
 
+
+PASTA TWEETS na src.
+
+- Tweet.js   nossa model
+- tweets.controller.js
+- tweets.route.js
+- tweets.service.js
+
+const tweetsRoute = require("./tweets/tweets.route")
+no index criamos e 
+app.use("/tweets", tweetsRoute)
 
 

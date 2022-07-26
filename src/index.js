@@ -5,7 +5,7 @@ const connectDataBase = require('./database/database');
 
 const userRoute = require("./users/users.route");
 const authRoute = require("./auth/auth.route")
-
+const tweetsRoute = require("./tweets/tweets.route")
 
 const port = process.env.PORT || 3000;
 const app = express();
@@ -17,6 +17,8 @@ app.use(express.json());// para o nosso backend reconhecer o json
 
 app.use("/users", userRoute);
 app.use("/auth", authRoute)
+app.use("/tweets", tweetsRoute)
+
 
 
 app.get("/", (req, res) => {
