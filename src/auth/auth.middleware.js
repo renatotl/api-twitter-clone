@@ -26,12 +26,12 @@ module.exports = (req, res, next) => {
 // o bearer agore é o schema e token continua tu=oken. o arrey foi desconstruído
   const [scheme, token] = parts;
 //validando individualente
-  if (!/^Bearer^/i.test(scheme)) {//verificando de scheme começa com Bearer
+  if (!/^Bearer$/i.test(scheme)) {//verificando de scheme começa com Bearer
     return res.status(401).send({ message: "Token malformatado!" });
   }
-
+//verificando o jwt
   jwt.verify(token, process.env.SECRET, async (err, decoded) => {
-    const user = findByIdUserService(decoded.id);//id do generateToken desconstroi 
+    const user = await findByIdUserService(decoded.id);//id do generateToken desconstroi 
 
     if (err || !user || !user.id) {//se nao tiver, ele da erro
       return res.status(401).send({ message: "Token inválido!" });

@@ -1,9 +1,9 @@
 const mongoose = require("mongoose");
 
 const TweetSchema = new mongoose.Schema({
-    user: {// é quem está logado
+    user: {// é quem está logado// relacionando tabela no mongoose
         type: mongoose.Schema.Types.ObjectId,//id de usuário
-          ref: "User",
+          ref: "User",// referencia a tabela user
           required : true,
 
     },
@@ -13,12 +13,12 @@ const TweetSchema = new mongoose.Schema({
 
     },
     likes: {
-        type: Arrey,
+        type: Array,
           required : true,
 
     },
     comments: {
-        type: Arrey,
+        type: Array,
           required : true,
 
     },

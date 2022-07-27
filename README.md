@@ -412,4 +412,117 @@ const tweetsRoute = require("./tweets/tweets.route")
 no index criamos e 
 app.use("/tweets", tweetsRoute)
 
+deixamos configurado nosso Tweet.js
+
+=====Service
+
+Começamos importando o model Tweet que será usado para manipularmos o banco de dados;
+
+const Tweet = require("./Tweet");
+
+Para salvar um tweet no banco de dados, criaremos a função createTweetService que receberá message que é a mensagem/tweet e userId que é o usuário que fez o tweet como parâmetros, nela utilizaremos o método create do mongoose:
+
+const createTweetService = (message, userId) => Tweet.create({message, user:userId});
+
+Não esqueça de exportar a função:
+
+module.exports = { createTweetService };
+
+=====Controller
+
+Começamos importando o tweetService que contém as regras de negócio:
+
+const tweetService = require("./tweets.service");
+
+Criaremos a função createTweetController e receberemos do corpo da requisição as informações para criar um tweet:
+
+const createTweetController = async (req, res) => {};
+
+Try -Catch
+
+Inicialmente vamos desconstruir nosso body e pegar somente o parâmetro message, fazendo a validação caso o campo esteja vazio:
+
+const {message} = req.body;
+
+if(!message){
+	res.status(400).send({message:"O Envie todos os dados necessários para a criação do tweet"});
+}
+
+Vamos pegar o ID do nosso usuário que está logado:
+
+const { id } = await tweetService.createTweetService(message, req.userId);
+
+Em seguida mandamos para o nosso front-end a mensagem que o tweet foi criado:
+
+return res.send({
+	message:"Tweet criado com sucesso!",
+	tweet: {id, message},
+})
+
+Após isso, o arquivo tweets.controller.js ficará assim:
+
+const tweetService = require("./tweets.service");
+
+const createTweetController = async (req, res) => {
+  try {
+    const { message } = req.body;
+
+    if (!message) {
+      res.status(400).send({
+        message: "Envie todos os dados necessário para a criação do tweet",
+      });
+    }
+
+    const { id } = await tweetService.createTweetService(message, req.userId);
+
+    return res.send({
+      message: "Tweet criado com sucesso!",
+      tweet: { id, message },
+    });
+  } catch (err) {
+    res.status(500).send({ message: err.message });
+  }
+};
+
+module.exports = {createTweetController}
+
+===Route
+
+Vamos fazer a rota para criar os tweets. Não esqueça de importar o arquivo tweets.controller.js.
+
+const router = require("express").Router();
+
+const tweetController = require("./tweets.controller");
+const authMiddleware = require("../auth/auth.middleware");
+
+router.post("/create", authMiddleware, tweetController.createTweetController);
+
+module.exports = router;
+
+
+Importe as rotas no index.js:
+
+
+require("dotenv").config();
+const express = require("express");
+const cors = require("cors");
+const connectDatabase = require("./database/database");
+const userRoute = require("./users/users.route");
+const authRoute = require("./auth/auth.route");
+const tweetsRoute = require("./tweets/tweets.route");
+
+const port = process.env.PORT || 3001;
+const app = express();
+
+connectDatabase();
+app.use(cors());
+app.use(express.json());
+
+app.use("/users", userRoute);
+app.use("/auth", authRoute);
+app.use("/tweets", tweetsRoute);
+
+app.listen(port, () => {
+  console.log(`Servidor rodando na porta ${port}`);
+});
 
