@@ -5,6 +5,6 @@ const authMiddleware = require("../auth/auth.middleware");// so vai poder criar 
 
 //chamamos primeiro o autendicador e depois controller
 router.post("/", authMiddleware, tweetController.createTweetController);
-
+router.get("/", authMiddleware, tweetController.findAllTweetsController);
 module.exports = router;
 

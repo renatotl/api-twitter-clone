@@ -526,3 +526,58 @@ app.listen(port, () => {
   console.log(`Servidor rodando na porta ${port}`);
 });
 
+ate este ponto foi feito as congiguraç~es do tweets
+
+
+Service
+
+Adicionamos ao nosso tweets.service.js o find all, para buscarmos todos os tweets cadastrados no banco de dados: Onde: sort({ _id: -1 }) Retorna porordem dos envios mais rescentes. populate("user") Função padrão do mongo, para quando tivermos um relacionamento, assim podemos popular nosso tweet com os dados do user
+
+
+const findAllTweetsService = () => Tweet.find().sort({ _id: -1 }).populate("user");
+
+Agora que exportamos nossa nova função, seguimos para o controller.
+
+Controller
+
+Criaremos a função findAllTweetsController para enviar todos os tweets que estão no banco de dados:
+
+Iniciamos com o try-catch, onde try tenta executar nossa lógica e o catch retorna um possível erro.
+
+const findAllTweetsController = async (req, res) => {
+  try {
+  //logica
+  } catch (err) {
+    res.status(500).send({ message: err.message });
+  }
+};
+
+
+Agora dentro da nosso logica vamos pegar todos os tweets e verificamos se ele veio vazio, se houver tweets, pegamos cada tweet com o metodo map() e retornarmos um novo objeto de results, que são os tweets.map(), onde criamos um novo objeto, dessa vez com os dados do tweet e user.
+
+
+const tweets = await tweetService.findAllTweetsService();
+
+if (tweets.length === 0) {
+return res.status(400).send({ message: "Não existem tweets!" });
+}
+
+return res.send({
+results: tweets.map((tweet) => ({
+        id: tweet._id,
+        message: tweet.message,
+        likes: tweet.likes.length,
+        comments: tweet.comments.length,
+        retweets: tweet.retweets.length,
+        name: tweet.user.name,
+        username: tweet.user.username,
+        avatar: tweet.user.avatar,
+      })),
+})
+
+Route
+
+Vamos fazer a rota para listar todos os tweets.
+
+router.get("/", authMiddleware, tweetController.findAllTweetsController);
+
