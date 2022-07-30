@@ -8,7 +8,12 @@ const createTweetService = (message, userId) => {
 };
 //.sort({ _id: -1 }) ordena nossos tweets no front
 //.populate("user") função padrão os tweets vem com o user
-const findAllTweetsService = () => Tweet.find().sort({ _id: -1 }).populate("user");
+const findAllTweetsService = (offSet=0, limit=5) => Tweet.find().sort({ _id: -1 }).skip(offSet).limit(limit).populate("user");// o número do limit() mostra a quantidade de tweets a ser mostrado
+// o sort ordena a lista jogando os ultimos itens para cima. o skip()pula os 5 tweets atuais e o limit mostra os próximos 5
+
+
+//countDocuments é uma função do mongoose traz quantos docs exsitem
+const countTweets = () => Tweet.countDocuments();
 
 
 //$regex: `${message || ""}` /Fornece recursos de expressão regular para strings de correspondência de padrões em consultas.
@@ -85,5 +90,6 @@ rawResult: true,
   searchTweetService,
   likesService,
   retweetsService,
-  commentsService
+  commentsService,
+  countTweets
  }

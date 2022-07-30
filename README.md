@@ -1387,3 +1387,358 @@ Será um patch pois vamos modificar apenas um campo no documento e não ele inte
 
 
 
+PAGINAÇÃO
+
+A paginação é importante para deixar nossa aplicação mais fluida. Imagina o Twitter ter que carregar todos os tweets de uma só vez, demoraria muito até o usuário conseguir usar.
+
+
+Para adicionarmos paginação no nosso projeto, vamos precisar alterar algumas funções do tweets.service.js e do tweets.controller.js.
+
+
+Service
+
+Vamos até o arquivo tweets.service.js e alterar a função findAllTweetsService.
+
+Vamos adicionar o método limit do mongoose. Ele limita quantos documentos serão mostrados. Colocaremos esse valor como parâmetro na função:
+
+
+const findAllTweetsService = (limit) => 
+  Tweet.find().sort({ _id: -1 }).limit(limit).populate("user");
+
+No frontend temos um botão Ver mais, quando eu apertar nesse botão, ele não pode me mostrar os mesmos documentos, ele precisa "pular" os documentos mostrados e mostrar os que estão depois dele.
+
+Para isso, vamos usar outro método do mongoose chamado skip e passaremos, como parâmetro na função, o offset: quantidade de documentos que ele precisa "pular":
+
+const findAllTweetsService = (offset, limit) =>
+  Tweet.find().sort({ _id: -1 }).skip(offset).limit(limit).populate("user");
+
+Vamos precisar do valor total de documentos cadastrados no banco. Utilizaremos o método countDocuments do mongoose:
+
+
+const countTweets = () => Tweet.countDocuments();
+
+Não esqueça de exportar essa função:
+
+
+module.exports = {
+  createTweetService,
+  findAllTweetsService,
+  searchTweetService,
+  likesService,
+  retweetsService,
+  commentsService,
+  countTweets,
+};
+
+No fim, o arquivo tweets.service.js deve ficar assim:
+
+const Tweet = require("./Tweet");
+
+const createTweetService = (message, userId) =>
+  Tweet.create({ message, user: userId });
+
+const findAllTweetsService = (offset, limit) =>
+  Tweet.find().sort({ _id: -1 }).skip(offset).limit(limit).populate("user");
+
+const countTweets = () => Tweet.countDocuments();
+
+const searchTweetService = (message) =>
+  Tweet.find({
+    message: { $regex: `${message || ""}`, $options: "i" },
+  })
+    .sort({ _id: -1 })
+    .populate("user");
+
+const likesService = (id, userId) =>
+  Tweet.findOneAndUpdate(
+    {
+      _id: id,
+      "likes.userId": { $nin: [userId] },
+    },
+    {
+      $push: {
+        likes: { userId, created: new Date() },
+      },
+    },
+    {
+      rawResult: true,
+    }
+  );
+
+const retweetsService = (id, userId) =>
+  Tweet.findOneAndUpdate(
+    {
+      _id: id,
+      "retweets.userId": { $nin: [userId] },
+    },
+    {
+      $push: {
+        retweets: { userId, created: new Date() },
+      },
+    },
+    {
+      rawResult: true,
+    }
+  );
+
+const commentsService = (id, userId) =>
+  Tweet.findOneAndUpdate(
+    {
+      _id: id,
+    },
+    {
+      $push: {
+        comments: { userId, created: new Date() },
+      },
+    },
+    {
+      rawResult: true,
+    }
+  );
+
+module.exports = {
+  createTweetService,
+  findAllTweetsService,
+  searchTweetService,
+  likesService,
+  retweetsService,
+  commentsService,
+  countTweets,
+};
+
+Controller
+
+Vamos até o arquivo tweets.controller.js e alterar a função findAllTweetsController.
+
+Antes de buscar os tweets, vamos definir as variáveis offset e limit que virão através de query params da requisição:
+
+    let { limit, offset } = req.query;
+
+    Fixaremos os tipos delas como Number. Se o offset não for informado, definiremos o valor igual a 0 e se o limit não for informado, definiremos o valor igual a 6. Você pode definir o valor que quiser no limit. E após isso, passaremos essa variáveis nos parâmetros da função finAllTweetsService:
+
+    offset = Number(offset);
+    limit = Number(limit);
+
+    if (!offset) {
+      offset = 0;
+    }
+
+    if (!limit) {
+      limit = 6;
+    }
+
+    const tweets = await tweetService.findAllTweetsService(offset, limit);
+
+    Invocaremos a função countTweets do service para guardar o total de documentos cadastrados no banco:
+
+     const total = await tweetService.countTweets();
+
+     Vamos precisar gerar uma URL de next e previous.
+
+Guardaremos a URL atual dentro de uma const:
+
+
+Vamos definir o valor de next que será a quantidade de documentos da página atual mais o limite e passaremos esse valor como query param na URL atual. Enquanto houver documentos a serem mostrados, a URL será disponibilizada para a próxima página, não havendo mais documentos, retornaremos null. Podemos usar esse valor para desativar o botão do front quando o mesmo estiver na última página:
+
+    const next = offset + limit;
+    const nextUrl = next < total ? `${currentUrl}?limit=${limit}&offset=${next}` : null
+
+    Sintaxe - Operador ternário condicional (ternary)
+
+condição ? valorSeVerdadeiro : valorSeFalso
+
+O valor de previous será a quantidade de documentos da página atual menos o limite e passaremos esse valor como query param na URL atual. Enquanto houver documentos a serem mostrados, a URL será disponibilizada para a página anterior, não havendo mais documentos, retornaremos null. Podemos usar esse valor para desativar o botão do front quando o mesmo estiver na primeira página:
+
+
+    const previous = offset - limit < 0 ? null : offset - limit;
+    const previousUrl =
+      previous != null
+        ? `${currentUrl}?limit=${limit}&offset=${previous}`
+        : null;
+
+        Agora, vamos devolver todos esses valores para o front:
+
+    return res.send({
+      nextUrl,
+      previousUrl,
+      limit,
+      offset,
+      total,
+
+      results: tweets.map((tweet) => ({
+        id: tweet._id,
+        message: tweet.message,
+        likes: tweet.likes.length,
+        comments: tweet.comments.length,
+        retweets: tweet.retweets.length,
+        name: tweet.user.name,
+        username: tweet.user.username,
+        avatar: tweet.user.avatar,
+      })),
+
+
+
+      No fim, o arquivo tweets.controller.js deve ficar assim:
+
+
+const tweetService = require("./tweets.service");
+
+const createTweetController = async (req, res) => {
+  try {
+    const { message } = req.body;
+
+    if (!message) {
+      res.status(400).send({
+        message: "Envie todos os dados necessário para a criação do tweet",
+      });
+    }
+
+    const { id } = await tweetService.createTweetService(message, req.userId);
+
+    return res.send({
+      message: "Tweet criado com sucesso!",
+      tweet: { id, message },
+    });
+  } catch (err) {
+    res.status(500).send({ message: err.message });
+  }
+};
+
+const findAllTweetsController = async (req, res) => {
+  try {
+    let { limit, offset } = req.query;
+
+    limit = Number(limit);
+    offset = Number(offset);
+
+    if (!limit) {
+      limit = 6;
+    }
+
+    if (!offset) {
+      offset = 0;
+    }
+
+    const tweets = await tweetService.findAllTweetsService(offset, limit);
+
+    const total = await tweetService.countTweets();
+
+    const currentUrl = req.baseUrl;
+
+    const next = offset + limit;
+    const nextUrl =
+      next < total ? `${currentUrl}?limit=${limit}&offset=${next}` : null;
+
+    const previous = offset - limit < 0 ? null : offset - limit;
+    const previousUrl =
+      previous != null
+        ? `${currentUrl}?limit=${limit}&offset=${previous}`
+        : null;
+
+    if (tweets.length === 0) {
+      return res.status(400).send({ message: "Não existem tweets!" });
+    }
+
+    return res.send({
+      nextUrl,
+      previousUrl,
+      limit,
+      offset,
+      total,
+
+      results: tweets.map((tweet) => ({
+        id: tweet._id,
+        message: tweet.message,
+        likes: tweet.likes.length,
+        comments: tweet.comments.length,
+        retweets: tweet.retweets.length,
+        name: tweet.user.name,
+        username: tweet.user.username,
+        avatar: tweet.user.avatar,
+      })),
+    });
+  } catch (err) {
+    res.status(500).send({ message: err.message });
+  }
+};
+
+const searchTweetController = async (req, res) => {
+  const { message } = req.query;
+
+  const tweets = await tweetService.searchTweetService(message);
+
+  if (tweets.length === 0) {
+    return res
+      .status(400)
+      .send({ message: "Não existem tweets com essa mensagem!" });
+  }
+
+  return res.send({
+    tweets: tweets.map((tweet) => ({
+      id: tweet._id,
+      message: tweet.message,
+      likes: tweet.likes.length,
+      comments: tweet.comments.length,
+      retweets: tweet.retweets.length,
+      name: tweet.user.name,
+      username: tweet.user.username,
+      avatar: tweet.user.avatar,
+    })),
+  });
+};
+
+const likeTweetController = async (req, res) => {
+  const { id } = req.params;
+
+  const userId = req.userId;
+
+  const tweetLiked = await tweetService.likesService(id, userId);
+
+  if (tweetLiked.lastErrorObject.n === 0) {
+    return res.status(400).send({ message: "Você já deu like neste tweet!" });
+  }
+
+  return res.send({
+    message: "Like realizado com sucesso!",
+  });
+};
+
+const retweetTweetController = async (req, res) => {
+  const { id } = req.params;
+
+  const userId = req.userId;
+
+  const tweetRetweeted = await tweetService.retweetsService(id, userId);
+
+  if (tweetRetweeted.lastErrorObject.n === 0) {
+    return res
+      .status(400)
+      .send({ message: "Você já deu retweet neste tweet!" });
+  }
+
+  return res.send({
+    message: "Retweet realizado com sucesso!",
+  });
+};
+
+const commentTweetController = async (req, res) => {
+  const { id } = req.params;
+
+  const userId = req.userId;
+
+  await tweetService.commentsService(id, userId);
+
+  return res.send({
+    message: "Comentario realizado com sucesso!",
+  });
+};
+
+module.exports = {
+  createTweetController,
+  findAllTweetsController,
+  searchTweetController,
+  likeTweetController,
+  retweetTweetController,
+  commentTweetController,
+};
+

@@ -23,14 +23,55 @@ const createTweetController = async (req, res) => {
 
 const findAllTweetsController = async (req, res) => {
   try {
+let {limit, offSet} = req.quary
+// precisamos alterar isso por isso recebemos por quary
+
+// garantindo que limit e offSet são número vamos converté-lo para number
+limit = Number(limit);
+offSet = Number(offSet);
+//Se não exisir limit
+if(!limit){
+  limit= 5
+}
+// Se não existit offSet
+if(!offSet){
+  offSet= 0
+}
+
   //logica
-  const tweets = await tweetService.findAllTweetsService();
+  const tweets = await tweetService.findAllTweetsService( offSet, limit);
+
+  const total = await tweetService.countTweets();// ele vai contar quantos tweets a gente têm
+
+//url atual do front end
+  const currentUrl = req.baseUrl;
+
+
+  const next = offSet + limit;
+  const nextUrl = next < total ? `${currentUrl}?limit=${limit}&offSet=${next}` : null
+
+
+
+  const previous = offSet - limit < 0 ? null : offSet - limit;
+  const previousUrl =
+    previous != null
+      ? `${currentUrl}?limit=${limit}&offSet=${previous}`
+      : null;
+
+
 
 if (tweets.length === 0) {
 return res.status(400).send({ message: "Não existem tweets!" });
 }
 
 return res.send({
+  nextUrl,
+  previousUrl,
+  limit,
+  offSet,
+  total,
+
+
 results: tweets.map((tweet) => ({//pegando tweet por tweet e fazendo um novoobjeto
         id: tweet._id,// mandando o id do tweet
         message: tweet.message,// mandandoas msm desse tweet
