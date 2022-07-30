@@ -6,5 +6,15 @@ const authMiddleware = require("../auth/auth.middleware");// so vai poder criar 
 //chamamos primeiro o autendicador e depois controller
 router.post("/", authMiddleware, tweetController.createTweetController);
 router.get("/", authMiddleware, tweetController.findAllTweetsController);
+router.get("/search", authMiddleware, tweetController.searchTweetController);
+//Vamos adicionar a rota do like:
+router.patch("/:id/like", authMiddleware, tweetController.likeTweetController)
+//Será um patch pois vamos modificar apenas um campo no documento e não ele inteiro.
+
+router.patch("/:id/retweet", authMiddleware,tweetController.retweetTweetController);
+//Será um patch pois vamos modificar apenas um campo no documento e não ele inteiro.
+
+
+
 module.exports = router;
 

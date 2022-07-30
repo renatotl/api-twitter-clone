@@ -581,3 +581,809 @@ Vamos fazer a rota para listar todos os tweets.
 
 router.get("/", authMiddleware, tweetController.findAllTweetsController);
 
+Service
+
+Vamos adicionar ao nosso tweets.service.js o searchTweetService, para buscarmos todos os tweets por palavra-chave ou frase. Onde teremos:
+
+$regex: `${message || ""}` //Fornece recursos de expressão regular para strings de correspondência de padrões em consultas.
+
+$options: "i" Insensibilidade entre maiúsculas e minúsculas para combinar maiúsculas e minúsculas.
+
+Nessa estrutura não usamos findOne, pois buscaremos todos os tweets que as condições condizem com a função que passamos, no nosso caso conter a palavra/frase na message.
+
+Exportamos a função:
+
+module.exports = { createTweetService, findAllTweetsService, searchTweetService };
+
+Terminado esses passos nosso tweets.service.js ficará assim:
+
+const Tweet = require("./Tweet");
+
+const createTweetService = (message, userId) =>
+  Tweet.create({ message, user: userId });
+
+const findAllTweetsService = () => Tweet.find().sort({ _id: -1 }).populate("user");
+
+const searchTweetService = (message) =>
+  Tweet.find({
+    message: { $regex: `${message || ""}`, $options: "i" },
+  })
+    .sort({ _id: -1 })
+    .populate("user");
+
+module.exports = {createTweetService, findAllTweetsService, searchTweetService};
+
+Controller
+
+Criaremos a função searchTweetController para enviar todos os tweets que estão no banco de dados filtrados:
+
+recebemos nossa message do body e fazemos nossa busca em searchTweetService passando nossa message, depois verificamos de nosso array veio vazio.
+
+const searchTweetController = async (req, res) => {
+  const { message } = req.query;
+
+  const tweets = await tweetService.searchTweetService(message);
+
+  if (tweets.length === 0) {
+    return res
+      .status(400)
+      .send({ message: "Não existem tweets com essa mensagem!" });
+  }
+};
+
+Agora que temos nossas validações entregamos o novo array assim como fizemos em findAllTweetsController
+
+
+return res.send({
+    tweets: tweets.map((tweet) => ({
+      id: tweet._id,
+      message: tweet.message,
+      likes: tweet.likes.length,
+      comments: tweet.comments.length,
+      retweets: tweet.retweets.length,
+      name: tweet.user.name,
+      username: tweet.user.username,
+      avatar: tweet.user.avatar,
+    })),
+});
+
+Assim ficará o nosso tweets.controller.js.
+
+const tweetService = require("./tweets.service");
+
+const createTweetController = async (req, res) => {
+  try {
+    const { message } = req.body;
+
+    if (!message) {
+      res.status(400).send({
+        message: "Envie todos os dados necessário para a criação do tweet",
+      });
+    }
+
+    const { id } = await tweetService.createTweetService(message, req.userId);
+
+    return res.send({
+      message: "Tweet criado com sucesso!",
+      tweet: { id, message },
+    });
+  } catch (err) {
+    res.status(500).send({ message: err.message });
+  }
+};
+
+const findAllTweetsController = async (req, res) => {
+  try {
+    const tweets = await tweetService.findAllTweetsService();
+
+    if (tweets.length === 0) {
+      return res.status(400).send({ message: "Não existem tweets!" });
+    }
+
+    return res.send({
+      results: tweets.map((tweet) => ({
+        id: tweet._id,
+        message: tweet.message,
+        likes: tweet.likes.length,
+        comments: tweet.comments.length,
+        retweets: tweet.retweets.length,
+        name: tweet.user.name,
+        username: tweet.user.username,
+        avatar: tweet.user.avatar,
+      })),
+    });
+
+  } catch (err) {
+    res.status(500).send({ message: err.message });
+  }
+};
+
+const searchTweetController = async (req, res) => {
+  const { message } = req.query;
+
+  const tweets = await tweetService.searchTweetService(message);
+
+  if (tweets.length === 0) {
+    return res
+      .status(400)
+      .send({ message: "Não existem tweets com essa mensagem!" });
+  }
+
+  return res.send({
+    tweets: tweets.map((tweet) => ({
+      id: tweet._id,
+      message: tweet.message,
+      likes: tweet.likes.length,
+      comments: tweet.comments.length,
+      retweets: tweet.retweets.length,
+      name: tweet.user.name,
+      username: tweet.user.username,
+      avatar: tweet.user.avatar,
+    })),
+  });
+};
+
+
+module.exports = {createTweetController, findAllTweetsController, searchTweetController};
+
+
+Route
+
+
+A rota onde essa busca será feita será:
+
+
+router.get("/search", authMiddleware, tweetController.searchTweetController);
+
+Terminando essa rota nosso arquivo tweets.route.js fica dessa maneira:
+
+const router = require("express").Router();
+
+const tweetController = require("./tweets.controller");
+const authMiddleware = require("../auth/auth.middleware");
+
+router.post("/create", authMiddleware, tweetController.createTweetController);
+router.get("/", authMiddleware, tweetController.findAllTweetsController);
+router.get("/search", authMiddleware, tweetController.searchTweetController);
+
+module.exports = router;
+
+Service
+
+Vá até o arquivo tweets.service.js e crie a função likesService, ela vai receber dois parâmetros: o id do tweet e o id do usuário. Vamos usar o método findOneAndUpdate do mongoose e vamos mandar um objeto com algumas configurações:
+
+const likesService = (id, userId) => Tweet.findOneAndUpdate({});
+
+Vamos buscar o id do tweet e se nenhum usuário tiver dado like nesse tweet vamos adicionar o campo likes através da query $nin. Se esse usuário já tiver dado like, essa mesma query não deixará dar outro like:
+
+
+    {
+        _id: id,
+        "likes.userId": { $nin: [userId]}
+    },
+
+    Se for o primeiro like, vamos dar um push no array com o id do usuário e a data do like:
+
+    {
+        $push: {
+            likes: { userId, created: new Date() }
+        }
+    },
+
+    E, por fim, precisamos colocar um rawResult: true para o MongoDB retornar o resultado dos procedimentos acima:
+
+
+
+    {
+        rawResult: true,
+    },
+
+    Não esqueça de exportar a função:
+
+
+module.exports = {
+  createTweetService,
+  findAllTweetsService,
+  searchTweetService,
+  likesService
+}
+
+No fim, o arquivo tweets.service.js deve ficar assim:
+
+
+const Tweet = require("./Tweet");
+
+const createTweetService = (message, userId) => Tweet.create({ message, user: userId });
+
+const findAllTweetsService = () => Tweet.find().sort({ _id: -1 }).populate("user");
+
+const searchTweetService = (message) => Tweet.find(
+    {
+      message: { $regex: `${message || ""}`, $options: "i" },
+    })
+    .sort({ _id: -1 })
+    .populate("user");
+
+const likesService = (id, userId) => Tweet.findOneAndUpdate(
+    {
+      _id: id,
+      "likes.userId": { $nin: [userId]}
+    },
+    {
+      $push: {
+        likes: { userId, created: new Date() }
+      }
+    },
+    {
+      rawResult: true,
+    },
+);
+
+module.exports = {
+  createTweetService,
+  findAllTweetsService,
+  searchTweetService,
+  likesService
+}
+
+No fim, o arquivo tweets.service.js deve ficar assim:
+
+const Tweet = require("./Tweet");
+
+const createTweetService = (message, userId) => Tweet.create({ message, user: userId });
+
+const findAllTweetsService = () => Tweet.find().sort({ _id: -1 }).populate("user");
+
+const searchTweetService = (message) => Tweet.find(
+    {
+      message: { $regex: `${message || ""}`, $options: "i" },
+    })
+    .sort({ _id: -1 })
+    .populate("user");
+
+const likesService = (id, userId) => Tweet.findOneAndUpdate(
+    {
+      _id: id,
+      "likes.userId": { $nin: [userId]}
+    },
+    {
+      $push: {
+        likes: { userId, created: new Date() }
+      }
+    },
+    {
+      rawResult: true,
+    },
+);
+
+module.exports = {
+  createTweetService,
+  findAllTweetsService,
+  searchTweetService,
+  likesService
+}
+
+
+Controller
+
+Vamos criar a função likeTweetController. Receberemos o id do tweet do parâmetro da requisição e o userId do middleware:
+
+const likeTweetController = async (req, res) => {
+  const { id } = req.params;
+    
+  const userId = req.userId;
+};
+
+Invocaremos a função likesService e passaremos o id e o userId. Validaremos se o tweet recebeu um like através do lastErroObject.n, se ele for igual a zero, quer dizer que o tweet já recebeu um like daquele usuário:
+
+Route
+Vamos adicionar a rota do like:
+
+router.patch("/:id/like", authMiddleware, tweetController.likeTweetController)
+
+Service
+
+Vá até o arquivo tweets.service.js e crie a função retweetsService, ela vai receber dois parâmetros: o id do tweet e o id do usuário. Vamos usar o método findOneAndUpdate do mongoose e vamos mandar um objeto com algumas configurações:
+
+const retweetsService = (id, userId) => Tweet.findOneAndUpdate({});
+
+Vamos buscar o id do tweet e se nenhum usuário tiver dado retweet nesse tweet vamos adicionar o campo retweets através da query $nin. Se esse usuário já tiver dado retweets, essa mesma query não deixará dar outro retweet:
+
+    {
+        _id: id,
+        "retweets.userId": { $nin: [userId]}
+    }, 
+
+
+    Se for o primeiro retweet, vamos dar um push no array com o id do usuário e a data do retweet:
+
+
+    {
+        $push: {
+            retweets: { userId, created: new Date() }
+        }
+    },
+
+    E, por fim, precisamos colocar um rawResult: true para o MongoDB retornar o resultado dos procedimentos acima:
+
+
+    {
+        rawResult: true,
+    },
+
+    Não esqueça de exportar a função:
+
+
+module.exports = {
+  createTweetService,
+  findAllTweetsService,
+  searchTweetService,
+  likesService,
+  retweetsService
+}
+
+Service
+
+
+Vá até o arquivo tweets.service.js e crie a função retweetsService, ela vai receber dois parâmetros: o id do tweet e o id do usuário. Vamos usar o método findOneAndUpdate do mongoose e vamos mandar um objeto com algumas configurações:
+
+
+const retweetsService = (id, userId) => Tweet.findOneAndUpdate({});
+
+Vamos buscar o id do tweet e se nenhum usuário tiver dado retweet nesse tweet vamos adicionar o campo retweets através da query $nin. Se esse usuário já tiver dado retweets, essa mesma query não deixará dar outro retweet:
+
+
+    {
+        _id: id,
+        "retweets.userId": { $nin: [userId]}
+    },
+
+    Se for o primeiro retweet, vamos dar um push no array com o id do usuário e a data do retweet:
+
+
+    {
+        $push: {
+            retweets: { userId, created: new Date() }
+        }
+    },
+
+    E, por fim, precisamos colocar um rawResult: true para o MongoDB retornar o resultado dos procedimentos acima:
+
+
+    {
+        rawResult: true,
+    },
+
+    Não esqueça de exportar a função:
+
+
+module.exports = {
+  createTweetService,
+  findAllTweetsService,
+  searchTweetService,
+  likesService,
+  retweetsService
+}
+
+No fim, o arquivo tweets.service.js deve ficar assim:
+
+
+const Tweet = require("./Tweet");
+
+const createTweetService = (message, userId) => Tweet.create({ message, user: userId });
+
+const findAllTweetsService = () => Tweet.find().sort({ _id: -1 }).populate("user");
+
+const searchTweetService = (message) =>
+  Tweet.find({
+    message: { $regex: `${message || ""}`, $options: "i" },
+  })
+    .sort({ _id: -1 })
+    .populate("user");
+
+const likesService = (id, userId) =>
+  Tweet.findOneAndUpdate(
+    {
+      _id: id,
+      "likes.userId": { $nin: [userId] },
+    },
+    {
+      $push: {
+        likes: { userId, created: new Date() },
+      },
+    },
+    {
+      rawResult: true,
+    }
+  );
+
+const retweetsService = (id, userId) =>
+  Tweet.findOneAndUpdate(
+    {
+      _id: id,
+      "retweets.userId": { $nin: [userId] },
+    },
+    {
+      $push: {
+        retweets: { userId, created: new Date() },
+      },
+    },
+    {
+      rawResult: true,
+    }
+  );
+
+module.exports = {
+  createTweetService,
+  findAllTweetsService,
+  searchTweetService,
+  likesService,
+  retweetsService
+}
+
+
+
+Controller
+
+
+Vamos criar a função retweetTweetController . Receberemos o id do tweet do parâmetro da requisição e o userId do middleware:
+
+
+const retweetTweetController  = async (req, res) => {
+  const { id } = req.params;
+    
+  const userId = req.userId;
+};
+
+Invocaremos a função retweetsService e passaremos o id e o userId. Validaremos se o tweet recebeu um retweet através do lastErroObject.n, se ele for igual a zero, quer dizer que o tweet já recebeu um retweet daquele usuário:
+
+
+  const tweetRetweeted = await tweetService.retweetsService(id, userId);
+
+  if (tweetRetweeted.lastErrorObject.n === 0) {
+    return res
+      .status(400)
+      .send({ message: "Você já deu retweet neste tweet!" });
+  }
+
+  Por fim, devolvemos uma resposta:
+
+
+  return res.send({
+    message: "Retweet realizado com sucesso!",
+  });
+
+  Não esqueça de exportar a função:
+
+
+module.exports = {
+  createTweetController, 
+  findAllTweetsController, 
+  searchTweetController,
+  likeTweetController,
+  retweetTweetController,
+};
+
+Route
+
+Vamos adicionar a rota do retweet:
+
+
+router.patch(
+  "/:id/retweet",
+  authMiddleware,
+  tweetController.retweetTweetController
+);
+
+Comment Tweet
+
+
+Service
+
+
+Vá até o arquivo tweets.service.js e crie a função commentsService , ela vai receber dois parâmetros: o id do tweet e o id do usuário. Vamos usar o método findOneAndUpdate do mongoose e vamos mandar um objeto com algumas configurações:
+
+
+const commentsService = (id, userId) => Tweet.findOneAndUpdate({});
+
+Vamos buscar o id do tweet:
+
+
+    {
+      _id: id,
+    },
+
+    Vamos dar um push no array com o id do usuário e a data do comment:
+
+
+    {
+      $push: {
+        comments: { userId, created: new Date() },
+      },
+    },
+
+    E, por fim, precisamos colocar um rawResult: true para o MongoDB retornar o resultado dos procedimentos acima:
+
+
+    {
+        rawResult: true,
+    },
+
+    Não esqueça de exportar a função:
+
+
+module.exports = {
+  createTweetService,
+  findAllTweetsService,
+  searchTweetService,
+  likesService,
+  retweetsService,
+  commentsService,
+}
+
+No fim, o arquivo tweets.service.js deve ficar assim:
+
+
+const Tweet = require("./Tweet");
+
+const createTweetService = (message, userId) => Tweet.create({ message, user: userId });
+
+const findAllTweetsService = () => Tweet.find().sort({ _id: -1 }).populate("user");
+
+const searchTweetService = (message) =>
+  Tweet.find({
+    message: { $regex: `${message || ""}`, $options: "i" },
+  })
+    .sort({ _id: -1 })
+    .populate("user");
+
+const likesService = (id, userId) =>
+  Tweet.findOneAndUpdate(
+    {
+      _id: id,
+      "likes.userId": { $nin: [userId] },
+    },
+    {
+      $push: {
+        likes: { userId, created: new Date() },
+      },
+    },
+    {
+      rawResult: true,
+    }
+  );
+
+const retweetsService = (id, userId) =>
+  Tweet.findOneAndUpdate(
+    {
+      _id: id,
+      "retweets.userId": { $nin: [userId] },
+    },
+    {
+      $push: {
+        retweets: { userId, created: new Date() },
+      },
+    },
+    {
+      rawResult: true,
+    }
+  );
+
+const commentsService = (id, userId) =>
+  Tweet.findOneAndUpdate(
+    {
+      _id: id,
+    },
+    {
+      $push: {
+        comments: { userId, created: new Date() },
+      },
+    },
+    {
+      rawResult: true,
+    }
+  );
+
+module.exports = {
+  createTweetService,
+  findAllTweetsService,
+  searchTweetService,
+  likesService,
+  retweetsService,
+  commentsService,
+}
+
+
+Controller
+
+
+Vamos criar a função commentTweetController . Receberemos o id do tweet do parâmetro da requisição e o userId do middleware:
+
+
+const commentTweetController   = async (req, res) => {
+  const { id } = req.params;
+    
+  const userId = req.userId;
+};
+
+
+const commentTweetController   = async (req, res) => {
+  const { id } = req.params;
+    
+  const userId = req.userId;
+};
+
+
+Invocaremos a função commentsService e passaremos o id e o userId:
+
+
+  await tweetService.commentsService(id, userId);
+
+  Por fim, devolvemos uma resposta:
+
+
+  return res.send({
+    message: "Comentário realizado com sucesso!",
+  });
+
+
+  Não esqueça de exportar a função:
+
+module.exports = {
+  createTweetController, 
+  findAllTweetsController, 
+  searchTweetController,
+  likeTweetController,
+  retweetTweetController,
+  commentTweetController,
+};
+
+No fim, o arquivo tweets.controller.js deve ficar assim:
+
+
+const tweetService = require("./tweets.service");
+
+const createTweetController = async (req, res) => {
+  try {
+    const { message } = req.body;
+
+    if (!message) {
+      res.status(400).send({
+        message: "Envie todos os dados necessário para a criação do tweet",
+      });
+    }
+
+    const { id } = await tweetService.createTweetService(message, req.userId);
+
+    return res.send({
+      message: "Tweet criado com sucesso!",
+      tweet: { id, message },
+    });
+  } catch (err) {
+    res.status(500).send({ message: err.message });
+  }
+};
+
+const findAllTweetsController = async (req, res) => {
+  try {
+    const tweets = await tweetService.findAllTweetsService();
+
+    if (tweets.length === 0) {
+      return res.status(400).send({ message: "Não existem tweets!" });
+    }
+
+    return res.send({
+      results: tweets.map((tweet) => ({
+        id: tweet._id,
+        message: tweet.message,
+        likes: tweet.likes.length,
+        comments: tweet.comments.length,
+        retweets: tweet.retweets.length,
+        name: tweet.user.name,
+        username: tweet.user.username,
+        avatar: tweet.user.avatar,
+      })),
+    });
+
+  } catch (err) {
+    res.status(500).send({ message: err.message });
+  }
+};
+
+const searchTweetController = async (req, res) => {
+  const { message } = req.query;
+
+  const tweets = await tweetService.searchTweetService(message);
+
+  if (tweets.length === 0) {
+    return res
+      .status(400)
+      .send({ message: "Não existem tweets com essa mensagem!" });
+  }
+
+  return res.send({
+    tweets: tweets.map((tweet) => ({
+      id: tweet._id,
+      message: tweet.message,
+      likes: tweet.likes.length,
+      comments: tweet.comments.length,
+      retweets: tweet.retweets.length,
+      name: tweet.user.name,
+      username: tweet.user.username,
+      avatar: tweet.user.avatar,
+    })),
+  });
+};
+
+const likeTweetController = async (req, res) => {
+  const { id } = req.params;
+    
+  const userId = req.userId;
+  
+  const tweetLiked = await tweetService.likesService(id, userId);
+
+  if (tweetLiked.lastErrorObject.n === 0) {
+      return res.status(400).send({ message: "Você já deu like neste tweet!"})
+  };
+  
+  return res.send({
+    message: "Like realizado com sucesso!"
+  });
+};
+
+const retweetTweetController = async (req, res) => {
+  const { id } = req.params;
+
+  const userId = req.userId;
+
+  const tweetRetweeted = await tweetService.retweetsService(id, userId);
+
+  if (tweetRetweeted.lastErrorObject.n === 0) {
+    return res
+      .status(400)
+      .send({ message: "Você já deu retweet neste tweet!" });
+  }
+
+  return res.send({
+    message: "Retweet realizado com sucesso!",
+  });
+};
+
+const commentTweetController = async (req, res) => {
+  const { id } = req.params;
+
+  const userId = req.userId;
+
+  await tweetService.commentsService(id, userId);
+
+  return res.send({
+    message: "Comentário realizado com sucesso!",
+  });
+};
+
+module.exports = {
+  createTweetController,
+  findAllTweetsController,
+  searchTweetController,
+  likeTweetController,
+  retweetTweetController,
+  commentTweetController,
+};
+
+Route
+
+
+Vamos adicionar a rota do comment:
+
+
+router.patch(
+  "/:id/comment",
+  authMiddleware,
+  tweetController.commentTweetController
+);
+
+
+Será um patch pois vamos modificar apenas um campo no documento e não ele inteiro.
+
+
+

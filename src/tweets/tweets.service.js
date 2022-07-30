@@ -11,4 +11,79 @@ const createTweetService = (message, userId) => {
 const findAllTweetsService = () => Tweet.find().sort({ _id: -1 }).populate("user");
 
 
- module.exports = {createTweetService,findAllTweetsService }
+//$regex: `${message || ""}` /Fornece recursos de expressão regular para strings de correspondência de padrões em consultas.
+const searchTweetService = (message) =>Tweet.find({
+    message: { $regex: `${message || ""}`, $options: "i" },
+  })
+    .sort({ _id: -1 })
+    .populate("user")
+
+
+
+    // NIN eu quero saber se os "likes.userId" se nenhum usuário conector oucriou alguma coisa. se o usuário já não deu like nesse tweet
+    const likesService = (id, userId) =>  
+    Tweet.findOneAndUpdate({
+        _id: id,
+        "likes.userId": { $nin: [userId]}
+
+    },
+    {// Se for o primeiro like, vamos dar um push no array com o id do usuário e a data do like:
+
+      $push: {// criamos o campo likes:
+          likes: { userId, created: new Date() }// registra data que foi dado o like
+      }
+  },
+  {//E, por fim, precisamos colocar um rawResult: true para o MongoDB retornar o resultado dos procedimentos acima:
+
+    rawResult: true,// retotna o resultado bruto do mongoDB
+},
+);
+
+const retweetsService = (id, userId) =>  
+    Tweet.findOneAndUpdate({
+        _id: id,
+        "retweets.userId": { $nin: [userId]}
+
+    },
+    {
+
+      $push: {
+          retweets: { userId, created: new Date() }
+      }
+  },
+  {    
+
+    rawResult: true,
+},
+);
+
+const commentsService = (id, userId) =>  
+Tweet.findOneAndUpdate({
+    _id: id,
+    // "comments.userId": { $nin: [userId]}
+
+},
+{
+
+  $push: {
+      retweets: { userId, created: new Date() }
+  }
+},
+{    
+
+rawResult: true,
+},
+);
+
+
+
+
+
+ module.exports = { 
+  createTweetService,
+  findAllTweetsService,
+  searchTweetService,
+  likesService,
+  retweetsService,
+  commentsService
+ }
