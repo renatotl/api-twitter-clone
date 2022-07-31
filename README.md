@@ -1743,3 +1743,134 @@ module.exports = {
 };
 
 
+A documentação é importante por diversos fatores, quase todos eles relacionados à organização, mas também por questões de produtividade (para quem vai consumir as informações) e eficiência na comunicação.
+
+Apesar de haver reuniões para apresentar as atualizações internas de um projeto, é inviável fornecer as informações de todas as funcionalidades em conversas.
+
+É por isso que a documentação, vai evitar muitas outras complicações, confusões e explicações repetitivas.
+
+Além das questões internas (de equipe e colaboração) imagine que todo projeto de back-end tem a possibilidade de ser uma API com endereço público onde vários front-ends farão consultas, ou seja, várias equipes vão precisar saber sobre as informações dos endpoints do back-end para desenvolver seus projetos de front-end.
+
+Felizmente, o Swagger existe para nos ajudar na produção dessa documentação dos endpoints do back-end e torna possível que alguns testes sejam feitos em uma interface amigável no próprio navegador, o que facilita o trabalho de todas as equipes que irão consumir essas informações.
+
+Instalação e configuração inicial
+
+Tendo em mente que a organização é uma das chaves para o sucesso, vamos começar!
+
+Em nosso projeto criamos uma pasta para o Swagger com os arquivos swagger.json e swagger.route.js.
+
+Em seguida instalamos o Swagger em nosso projeto, via Terminal com o seguinte comando:
+
+npm i swagger-ui-express
+
+Lembre-se de dar o comando acima na pasta do projeto! 😁
+
+swagger.route.js
+
+O arquivo swagger.route.js será o responsável pela configuração central do Swagger, fazendo a requisição do swagger-ui-express que instalamos e indicando também o nosso arquivo swagger.json que é responsável pelas rotas de endpoint que o Swagger disponibilizará para consulta, utilizando configurações do Router.
+
+O arquivo swagger.route.js ficará com o seguinte código:
+
+
+const router = require("express").Router();
+const swaggerUi = require("swagger-ui-express");
+const swaggerDocument = require("./swagger.json");
+
+route.use("/", swaggerUi.serve);
+route.get("/", swaggerUi.setup(swaggerDocument));
+
+module.exports = router;
+
+Importando o Swagger
+
+Agora vamos sinalizar para a nossa aplicação que existem configurações para o Swagger no arquivo swagger.route.js adicionando as seguintes linhas de código no arquivo index.js:
+
+const swaggerRoute = require("./swagger/swagger.route");
+
+E para utilizar a nossa importação, criamos um caminho para essa rota:
+
+app.use("/api-docs", swaggerRoute);
+
+Por questão de organização visual e boas práticas, as linhas devem ser adicionadas no index.js em seus respectivos "blocos", e o nosso index.js vai ficar assim:
+
+require("dotenv").config();
+const express = require("express");
+const cors = require("cors");
+const connectDatabase = require("./database/database");
+const userRoute = require("./users/users.route");
+const authRoute = require("./auth/auth.route");
+const tweetsRoute = require("./tweets/tweets.route");
+// NOVO CÓDIGO
+const swaggerRoute = require("./swagger/swagger.route");
+// NOVO CÓDIGO
+
+const port = process.env.PORT || 3001;
+const app = express();
+
+connectDatabase();
+app.use(cors());
+app.use(express.json());
+
+app.use("/users", userRoute);
+app.use("/auth", authRoute);
+app.use("/tweets", tweetsRoute);
+// NOVO CÓDIGO
+app.use("/api-docs", swaggerRoute);
+// NOVO CÓDIGO
+
+app.listen(port, () => {
+  console.log(`Servidor rodando na porta ${port}`);
+});
+
+Teste preliminar
+
+Com essas configurações, já podemos fazer um teste para ver se tudo foi instalado corretamente e a rota configurada leva até a interface do Swagger.
+
+Para esse teste, vamos inserir chaves vazias {} dentro do nosso arquivo swagger.json apenas para esse teste (vamos configurar o arquivo swagger.json logo adiante).
+
+Com o servidor rodando no Terminal:
+
+npm run dev
+
+Vamos até o navegador, no endpoint que configuramos, para obter o seguinte tela de erro do Swagger:
+
+localhost3000/apai-docs/
+
+
+TESTANDO O SWAGGER NO ENDPOINT 
+http://localhost:3000/api-docs/
+
+
+Modificações na rota POST
+
+No arquivo tweets.route.js vamos modificar a rota POST inclusive para torná-la semântica através da adição do código "/create" no endpoint POST e essa linha vai ficar assim:
+
+//CÓDIGO ANTERIOR
+router.post("/", authMiddleware, tweetController.createTweetController);
+//CÓDIGO ANTERIOR
+
+//CÓDIGO NOVO
+router.post("/create", authMiddleware, tweetController.createTweetController);
+//CÓDIGO NOVO
+
+Atualizando a rota POST no front-end
+
+Vamos fazer essa alteração no projeto do front-end no arquivo tweet-box.tsx:
+
+na linha 20, ficando assim:
+
+
+  const sendTweet = async () => {
+    const response = await fetch('http://localhost:3001/tweets/create', {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${localStorage.getItem('jwt')}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        message: tweetData,
+      }),
+    });
+
+    
+
