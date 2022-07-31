@@ -10,7 +10,7 @@
     },
     "servers": [
       {
-        "url": "https://backend-api-twitter-clone.herokuapp.com/",
+        "url": "https://backend-api-twitter-clone.herokuapp.com",
         "description": "API no Heroku"
       },
       {
