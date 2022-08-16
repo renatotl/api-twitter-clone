@@ -1872,5 +1872,111 @@ na linha 20, ficando assim:
       }),
     });
 
-    
+    Configurando as variáveis de ambiente
+
+A partir desse sucesso, sabemos que o nosso projeto está no ar e vamos iniciar as configurações dentro do Heroku, disponibilizadas na guia "Settings".
+
+A primeira configuração que vamos fazer são as variáveis que estão dentro do arquivo .env - lembrando que o arquivo .env é onde configuramos as senhas e, como não queremos que ninguém as veja, elas não ficam disponíveis no repositório.
+
+Portanto, podemos adicionar essas variáveis secretas diretamente nas configurações da nuvem, para que sejam criptografadas.
+
+Na nuvem do Heroku, as configurações do .env são acessadas clicando em "Config Vars" dentro da tab "Settings".
+
+
+No nosso arquivo .env temos duas variáveis:
+
+DATABASE_URL = "link gerado no site do MongoDB"
+SECRET = "segredo do .env local"
+
+O SECRET pegamos o mesmo valor do .env local:
+
+
+DATABASE_URL vamos utilizar o link gerado no site do MongoDB. Para isso vamos até a aba do site do MongoDB em "Database", depois clique em "Connect":
+
+
+Clique em "Connect your application".
+
+
+Copiamos a URL gerada.
+
+
+Opcionalmente, podemos substituir essa URL no arquivo .env local e guardar o endereço local no próprio arquivo:
+
+
+Já a configuração no Heroku adicionamos o nome das variáveis e os valores com os respectivos campos KEY e o valor VALUE:
+
+
+Atualizando o swagger.json
+
+Mudamos também no arquivo do nosso projeto:
+
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "API Twitter Clone",
+    "description": "API do clone do Twitter",
+    "contact": {
+      "email": "seu@email.com.br"
+    },
+    "version": "1.0.0"
+  },
+  "servers": [
+    { //NOVA URL COMO PRIORITÁRIA
+      "url": "https://bluetwitterclone.herokuapp.com",
+      "description": "API no Heroku"
+    },
+    {
+      "url": "http://localhost:3001",
+      "description": "API local"
+    }
+  ],
+  "paths": { ...
+  []
+
+  Após mudar no projeto local, fazemos o commit dessas alterações e aguardamos que sejam feitas pelo Heroku através de uma nova build.
+
+As alterações levam algum tempo e pode ser vista em "Latest Activity" na guia "Overview" do projeto.
+
+
+Assim que aparecer o status "Deployed" já podemos constatar as mudanças atualizando a página do App no navegador:
+
+
+Se dermos um GET pelo Swagger vamos obter a mensagem:
+
+{
+  "message": "Não existem usuários cadastrados"
+}
+
+Então vamos adicionar o primeiro usuário ao banco de dados que na nuvem ainda está vazio pelo Swagger mesmo, na rota "users/create" que utiliza o método POST:
+
+
+Após o cadastro de primeiro usuário, já podemos obter um token de acesso, seguindo para a área de Login.
+
+
+Clique em "Try Out" e depois em "Execute".
+
+E copiamos o token de acesso sem as aspas:
+
+
+Subindo a página, clicamos em "Authorize" para inserir o "bearerAuth" e prosseguir com o teste das outras rotas.
+
+Da mesma forma que fizemos, pratique algumas requisições aleatórias pela interface do Swagger sem consultar o material de estudos.
+
+Considerações gerais sobre documentação
+
+A informação dos endpoints pelo Swagger não é a única forma de documentar uma API.
+
+Também fazem parte de uma boa documentação arquivos como o readme.md na pasta do repositório e até mesmo uma página na web dedicada.
+
+Para conhecer mais formas de documentação, procure no Google termos como "API pública consulta CEP" ou quaisquer outras com termos como "documentação API" de plataformas como FB, Instagram, Google Maps, Spotify etc.
+
+Dependendo da complexidade da API, pode conter muitos textos, artigos, imagens, tutoriais, exemplos etc.
+
+A internet como a conhecemos hoje, com interconectividade entre as plataformas (tipo fazer login com o GitHub no Heroku) e muito mais, só é possível através das APIs.
+
+É tão importante quanto o próprio código que programa a API, é também a documentação.
+
+Afinal apenas através da documentação é que vamos realmente disponibilizar todas as funcionalidades para o mundo! 🚀💙
+
+
 
