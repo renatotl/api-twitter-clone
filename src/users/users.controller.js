@@ -15,11 +15,12 @@ if(!username || !name || !email || !password || !avatar){//se não tiver nenhum 
 //Faremos uma validação para que o usuário não tente criar uma conta com um email já registrado. Invocamos uma função do service que buscará o email informado no banco de dados:
 
 const foundUser = await userService.findByEmailUserService(email);// vem lá do service
-if (foundUser) {// se existir algúm usuário
+if (foundUser) {// se existir algúm usuário que chegou no service
     return res.status(400).send({
       message: "Usuário já existe!",
     });
 }
+// se o usuário não existir então já cria um
 const user = await userService.createUserService(req.body).catch((err) => console.log(err.message)) //ele vai enviar o que vier da requisição do body
 
 if(!user){// se não tiver usuário
@@ -61,3 +62,7 @@ module.exports = {
      createUserController,
      findAllUserController
      };
+
+
+     //ERRO se trata no controller
+     // o users.ervice contem nossas regras de negócios

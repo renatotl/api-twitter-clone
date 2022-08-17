@@ -1,7 +1,7 @@
 require("dotenv").config();// para o heroku
 const express = require("express");
 const cors = require("cors");
-const connectDataBase = require('./database/database');
+const connectDataBase = require('./database/database');// importamos para cá
 
 const userRoute = require("./users/users.route");
 const authRoute = require("./auth/auth.route")
