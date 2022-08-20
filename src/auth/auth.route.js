@@ -5,3 +5,6 @@ const authController = require("./auth.controller");//trazendo nosso controler
 router.post("/login", authController.loginController);
 
 module.exports = router
+
+
+// rota de autenticação do login 

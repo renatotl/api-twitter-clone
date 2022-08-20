@@ -10,3 +10,7 @@ const generateToken = (userId) => {
 };
 
 module.exports = { loginService, generateToken}
+
+// gerador de token de validação do usuário e barrar outras pessoas que não tenham o token o jwt segurança padrão de mercado
+
+

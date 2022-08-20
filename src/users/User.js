@@ -1,6 +1,9 @@
 const mongoose = require("mongoose");//exportando pra cá nosso mongoose
 
-const bcrypt = require("bcryptjs")
+const bcrypt = require("bcryptjs");//O BCrypt é um método de criptografia com o propósito de esconder senhas criadas pelos usuários em forma de texto “puro” em dados indecifráveis, utilizando o algoritmo hash. Essa é uma ferramenta segura para armazenar senhas no banco de dados e pode ser utilizada por qualquer linguagem de programação.
+
+//Após a definição do Schema, utilize o método pre e informe dois parâmetros: "save" para executar a encriptação antes de salvar a senha e a função que fará a encriptação. A função será assíncrona pois o bcrypt retorna uma Promisse e terá um next já que ela é um middleware:
+
 
 const UserSchema = new mongoose.Schema({// ele é um objeto
   name: {

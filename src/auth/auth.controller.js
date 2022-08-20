@@ -20,7 +20,7 @@ if(!user){
 }
 // segunda validaçãp 
 // foi necessáio importat o bcrypt para esta parte
-const isPasswordValid = await bcrypt.compare(password, user.password)// ele vai compara os 2 parâmetros o (password)este veio no body (user.password) este é o que está no usuário
+const isPasswordValid = await bcrypt.compare(password, user.password)// ele vai compara os 2 parâmetros o (password)este veio no body (user.password) este é o que está no usuário/ compara a senha do usuário com a a senha digitada
 
 if(!isPasswordValid){
   return res.status(400).send({massage: "Senha inválida "})
