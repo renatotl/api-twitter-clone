@@ -5,8 +5,8 @@ const loginService = (email) => User.findOne({email: email}).select("+password")
 
 // função do token. o SING pede 3 parãmetros o 1º é o Id, o SECRET vai esconder. O espire é que vai sexpirar um dia tem 86400 segundos
 const generateToken = (userId) => { 
-    return jwt.sign({ id: userId}, process.env.SECRET, { expiresIn: 86400})
-
+    return jwt.sign({ id: userId}, process.env.SECRET, { expiresIn: 86400})// gera um novo token apos 86400 segundos que é 24 horas 
+// o secrete da qui está no .env
 };
 
 module.exports = { loginService, generateToken}

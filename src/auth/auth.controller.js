@@ -27,7 +27,7 @@ if(!isPasswordValid){
 }
 const token = authService.generateToken(user.id);
 
-res.send({ token });
+res.send({ token });// fez o longon e retorna o token 
 
 
 }
