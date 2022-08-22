@@ -1,15 +1,17 @@
 const tweetService = require("./tweets.service");
 
+
+
 const createTweetController = async (req, res) => {
   try {
-    const { message } = req.body;// recebendo a message de forma desistruturada
+    const { message } = req.body;// recebendo a message de forma desistruturada trazendo so a message do body
 
-    if (!message) {
+    if (!message) {// validando se a message existe
       res.status(400).send({
         message: "Envie todos os dados necessário para a criação do tweet",
       });
     }
-// pegando o id domususario logado
+// pegando o id domususario logado e pegando na requisição o userId
     const { id } = await tweetService.createTweetService(message, req.userId);
 // estamos dentro de um try e precisamos de um return
     return res.send({

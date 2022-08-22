@@ -2,9 +2,10 @@
 
 const Tweet = require("./Tweet")
 
-
+//recebendo a message e o usuário que fez esse tweet
 const createTweetService = (message, userId) => {
   return Tweet.create({message, user: userId});//pode ser feito emline
+  // estamos inviado para o user em forma de objeto
 };
 //.sort({ _id: -1 }) ordena nossos tweets no front
 //.populate("user") função padrão os tweets vem com o user
@@ -19,7 +20,7 @@ const countTweets = () => Tweet.countDocuments();
 //$regex: `${message || ""}` /Fornece recursos de expressão regular para strings de correspondência de padrões em consultas.
 const searchTweetService = (message) =>Tweet.find({
     message: { $regex: `${message || ""}`, $options: "i" },
-  })
+  })//regex é mongpdb puro dentro do backend/ o "i"  ele ignora letra maiuscula eminiscula isso é case senssitive
     .sort({ _id: -1 })
     .populate("user")
 
