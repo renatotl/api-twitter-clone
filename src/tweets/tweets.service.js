@@ -13,6 +13,14 @@ const findAllTweetsService = (offSet, limit) => Tweet.find().sort({ _id: -1 }).s
 // o sort ordena a lista jogando os ultimos itens para cima. o skip()pula os 5 tweets atuais e o limit mostra os próximos 5
 
 
+
+
+//Tweet.find() = chama todos
+//.sort({ _id: -1 }) = organiza do ultimo criado para o primeiro
+// .skip(offSet) = pula 5
+//.limit(limit) = traz o liite de 5
+//.populate("user"); = popula com usero
+
 //countDocuments é uma função do mongoose traz quantos docs exsitem
 const countTweets = () => Tweet.countDocuments();
 
@@ -28,9 +36,9 @@ const searchTweetService = (message) =>Tweet.find({
 
     // NIN eu quero saber se os "likes.userId" se nenhum usuário conector oucriou alguma coisa. se o usuário já não deu like nesse tweet
     const likesService = (id, userId) =>  
-    Tweet.findOneAndUpdate({
+    Tweet.findOneAndUpdate({// forma correta de contar likes
         _id: id,
-        "likes.userId": { $nin: [userId]}
+        "likes.userId": { $nin: [userId]}//varificand se nehum usuario criou algo com esse id como um like
 
     },
     {// Se for o primeiro like, vamos dar um push no array com o id do usuário e a data do like:
@@ -41,6 +49,7 @@ const searchTweetService = (message) =>Tweet.find({
   },
   {//E, por fim, precisamos colocar um rawResult: true para o MongoDB retornar o resultado dos procedimentos acima:
 
+
     rawResult: true,// retotna o resultado bruto do mongoDB
 },
 );
@@ -49,6 +58,7 @@ const retweetsService = (id, userId) =>
     Tweet.findOneAndUpdate({
         _id: id,
         "retweets.userId": { $nin: [userId]}
+        /*Vamos buscar o id do tweet e se nenhum usuário tiver dado retweet nesse tweet vamos adicionar o campo retweets através da query $nin. Se esse usuário já tiver dado retweets, essa mesma query não deixará dar outro retweet:*/
 
     },
     {

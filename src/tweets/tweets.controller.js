@@ -33,7 +33,7 @@ limit = Number(limit);
 offSet = Number(offSet);
 //Se não exisir limit
 if(!limit){
-  limit= 5
+  limit= 5// número de twitt que vai aparecer
 }
 // Se não existit offSet
 if(!offSet){
@@ -50,11 +50,23 @@ if(!offSet){
 
 
   const next = offSet + limit;
+  //if ternário
   const nextUrl = next < total ? `${currentUrl}?limit=${limit}&offSet=${next}` : null
+// se next for menor que total constroi atraves de tenplente string a URL padão que tenho e manda um limite que vai ser o meu limit e offset recebendo um novo valor que é o next 
 
+//ciclo
+//offset = 0
+// limit = 5
+
+//offset = 5
+// limit = 5
+
+//offset = 10
+// limit = 5
 
 
   const previous = offSet - limit < 0 ? null : offSet - limit;
+  // offset - o limit. se for menor que 0 ele retorna nulo
   const previousUrl =
     previous != null
       ? `${currentUrl}?limit=${limit}&offSet=${previous}`
@@ -122,11 +134,11 @@ const searchTweetController = async (req, res) => {
 const likeTweetController = async (req, res) => {
   const { id } = req.params;// recebendo o id por parametro
     
-  const userId = req.userId;// pegando o userId pelo parametro
+  const userId = req.userId;// pegando o userId pelo parametro que vem do midware
 
   const tweetLiked = await tweetService.likesService(id, userId);
 
-  if (tweetLiked.lastErrorObject.n === 0) {
+  if (tweetLiked.lastErrorObject.n === 0) {// erro do mongo e o "n" é um in se ele for igual a zero, quer dizer que o tweet já recebeu um like daquele usuário:
       return res.status(400).send({ message: "Você já deu like neste tweet!"})
   };
  // Por fim, devolvemos uma resposta:
@@ -134,7 +146,7 @@ const likeTweetController = async (req, res) => {
   message: "Like realizado com sucesso!"
 });
 };
-
+// so pode retweetar uma vez so
 const retweetTweetController = async (req, res) => {
   const { id } = req.params;// recebendo o id por parametro
     

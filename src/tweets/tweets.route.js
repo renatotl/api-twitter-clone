@@ -9,7 +9,7 @@ router.get("/", authMiddleware, tweetController.findAllTweetsController);
 router.get("/search", authMiddleware, tweetController.searchTweetController);
 //Vamos adicionar a rota do like:
 router.patch("/:id/like", authMiddleware, tweetController.likeTweetController)
-//Será um patch pois vamos modificar apenas um campo no documento e não ele inteiro.
+//Será um patch pois vamos modificar apenas um campo no documento e não ele inteiro., já o put altera o objeto inteiro
 
 router.patch("/:id/retweet", authMiddleware,tweetController.retweetTweetController);
 //Será um patch pois vamos modificar apenas um campo no documento e não ele inteiro.
