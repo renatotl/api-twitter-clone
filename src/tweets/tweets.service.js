@@ -26,7 +26,7 @@ const countTweets = () => Tweet.countDocuments();
 
 
 //$regex: `${message || ""}` /Fornece recursos de expressão regular para strings de correspondência de padrões em consultas.
-const searchTweetService = (message) =>Tweet.find({
+const searchTweetService = (message) =>Tweet.find({// porque não fazer um findone porque eu posso ter mais de uma mensagem com o mesma message
     message: { $regex: `${message || ""}`, $options: "i" },
   })//regex é mongpdb puro dentro do backend/ o "i"  ele ignora letra maiuscula eminiscula isso é case senssitive
     .sort({ _id: -1 })
